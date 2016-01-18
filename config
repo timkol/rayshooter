@@ -1,0 +1,7 @@
+resX=1000;
+resY=1000;
+rayCount=1000000000L;
+pointc=0;
+forceCudaSettings=0;
+threadsPerBlock=128;
+concurrentThreads=12800;
