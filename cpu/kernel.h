@@ -12,5 +12,9 @@ typedef struct {
 } vect2;
 
 void bang(vect2* source);
+decimal pointBetaX(decimal imgX, decimal imgY);
+decimal pointBetaY(decimal imgX, decimal imgY);
+decimal backgroundBetaX(vect2 img);
+decimal backgroundBetaY(vect2 img);
 
 #endif

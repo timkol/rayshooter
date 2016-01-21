@@ -5,6 +5,7 @@
 #include <libconfig.h>
 
 #include "kernel.h"
+#include "storage.h"
 
 //settings part
 int resX, resY; //number of pixels of source
@@ -60,6 +61,24 @@ void histogram(vect2 pos){
 		hist_source[m][n]++;
 }
 
+void bang(vect2* source){
+	vect2 img;
+	img.x = (((decimal) rand())/RAND_MAX*imageSize.x)+imageLlcorner.x;
+	img.y = (((decimal) rand())/RAND_MAX*imageSize.y)+imageLlcorner.y;
+
+/*	decimal x = img.x - backgroundBetaX(img);
+	decimal y = img.y - backgroundBetaY(img);
+	for(int j=0; j<pointc; j++){
+		vect2 pt = points[j];
+		x -= pointBetaX(img.x-pt.x, img.y-pt.y);
+		y -= pointBetaY(img.x-pt.x, img.y-pt.y);
+	}
+*/
+	vect2 beta = totalBeta(img);
+	source->x = img.x - beta.x;
+	source->y = img.y - beta.y;
+}
+
 void simulate(){
 	long long cycles;
 	cycles=rayCount/concurrentThreads + 1;
@@ -92,6 +111,9 @@ void prepareMemory(){
 int main(){
 	loadConfig();
 	prepareMemory();
+	fprintf(stderr, "deserializing");
+	deserialize("cells.dat");
+	fprintf(stderr, "deserializing complete");
 
 	srand(time(NULL));//TODO different seeds on different processes?
 	simulate();
@@ -108,6 +130,7 @@ int main(){
 	for(unsigned int i=0; i<resY; i++){
                 free(hist_source[i]);
         }
+	freeMemory();
 	free(hist_source);
 	free(points);
 }
