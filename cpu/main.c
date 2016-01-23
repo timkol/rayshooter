@@ -12,12 +12,10 @@ int resX, resY; //number of pixels of source
 vect2 sourceSize; //size of source
 vect2 sourceLlcorner; //source left low corner coordinates
 long long rayCount; //overall number of rays
-int pointc; //number of mass points
 vect2 imageSize; //size of image
 vect2 imageLlcorner; //image left low corner coordinates
 
 int concurrentThreads;
-vect2 *points;
 	
 long long **hist_source;
 
@@ -46,7 +44,7 @@ void loadConfig(){
 	imageLlcorner.y=-10.0;
 
 	config_lookup_int64(&config, "rayCount", &rayCount);
-	config_lookup_int(&config, "pointc", &pointc);
+//	config_lookup_int(&config, "pointc", &pointc);
 
 	config_lookup_int(&config, "concurrentThreads", &concurrentThreads);
 
@@ -68,12 +66,7 @@ void bang(vect2* source){
 
 /*	decimal x = img.x - backgroundBetaX(img);
 	decimal y = img.y - backgroundBetaY(img);
-	for(int j=0; j<pointc; j++){
-		vect2 pt = points[j];
-		x -= pointBetaX(img.x-pt.x, img.y-pt.y);
-		y -= pointBetaY(img.x-pt.x, img.y-pt.y);
-	}
-*/
+*/	
 	vect2 beta = totalBeta(img);
 	source->x = img.x - beta.x;
 	source->y = img.y - beta.y;
@@ -94,7 +87,6 @@ void simulate(){
 }
 
 void prepareMemory(){
-	points=(vect2 *)malloc(pointc*sizeof(vect2));
 	hist_source=(long long **)malloc(resY*sizeof(long long *));
 	for(unsigned int i=0; i<resY; i++){
 		hist_source[i]=(long long *)malloc(resX*sizeof(long long));
@@ -105,7 +97,6 @@ void prepareMemory(){
 			hist_source[j][i]=0;
                 }
         }
-
 }
 
 int main(){
@@ -130,7 +121,6 @@ int main(){
 	for(unsigned int i=0; i<resY; i++){
                 free(hist_source[i]);
         }
-	freeMemory();
 	free(hist_source);
-	free(points);
+	freeMemory();
 }

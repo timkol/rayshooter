@@ -141,21 +141,21 @@ void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) 
 		}
 	}
 
-	vect2 cellPos, pointPos, tolerance;
+	vect2 cellPos, pointPos, tolerance, pointContrib;
 	tolerance.x = (tolX+0.5)*imageSize.x/matrixDimX;
 	tolerance.y = (tolY+0.5)*imageSize.y/matrixDimY;
 	for(int m=0; m<matrixDimY; m++){
 		cellPos.y = imageLlcorner.y+(m+0.5)*imageSize.y/matrixDimY;
 		for(int n=0; n<matrixDimX; n++){
 			cellPos.x = imageLlcorner.x+(n+0.5)*imageSize.x/matrixDimX;
-			pointMatrix[m][n].extContrib.x = backgroundBetaX(cellPos);
-			pointMatrix[m][n].extContrib.y = backgroundBetaY(cellPos);
+			pointMatrix[m][n].extContrib = backgroundBeta(cellPos);
 			for(int i=0; i<pointc; i++){
 				pointPos = points[i].pos;
 				if(fabs(pointPos.x-cellPos.x)<tolerance.x || fabs(pointPos.y-cellPos.y)<tolerance.y)
 					continue;
-				pointMatrix[m][n].extContrib.x += pointBetaX(cellPos.x-pointPos.x, cellPos.y-pointPos.y); //TODO different masses
-				pointMatrix[m][n].extContrib.y += pointBetaY(cellPos.x-pointPos.x, cellPos.y-pointPos.y);
+				pointContrib = pointBeta(cellPos.x-pointPos.x, cellPos.y-pointPos.y);
+				pointMatrix[m][n].extContrib.x += pointContrib.x; //TODO different masses
+				pointMatrix[m][n].extContrib.y += pointContrib.y;
 			}
 		}
 	}
