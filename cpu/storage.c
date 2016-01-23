@@ -7,8 +7,8 @@
 
 typedef struct {
 	vect2 extContrib; //background included
-	vect2 pos;
-	decimal mass;
+	int pointc;
+	pointMass *points;
 } cell;
 
 cell **pointMatrix;
@@ -25,10 +25,15 @@ void serialize(const char* filename) {
 	fprintf(f, "%x %x %x %x %a %a %a %a\n", matrixDimX, matrixDimY, tolX, tolY, imageSize.x, imageSize.y, imageLlcorner.x, imageLlcorner.y);
 
 	cell pt;
+	pointMass pm;
 	for(int i=0; i<matrixDimY; i++){
 		for(int j=0; j<matrixDimX; j++){
 			pt = pointMatrix[i][j];
-			fprintf(f, "%a %a %a %a %a\n", pt.extContrib.x, pt.extContrib.y, pt.pos.x, pt.pos.y, pt.mass);
+			fprintf(f, "%a %a %x\n", pt.extContrib.x, pt.extContrib.y, pt.pointc);
+			for(int k=0; k<pt.pointc; k++){
+				pm = pt.points[k];
+				fprintf(f, "%a %a %a\n", pm.pos.x, pm.pos.y, pm.mass);
+			}
 		}
 	}
 
@@ -44,9 +49,15 @@ void deserialize(const char* filename) {
 	allocateMemory();
 
 	cell pt;
+	pointMass pm;
 	for(int i=0; i<matrixDimY; i++){
 		for(int j=0; j<matrixDimX; j++){
-			fscanf(f, "%a %a %a %a %a", &pt.extContrib.x, &pt.extContrib.y, &pt.pos.x, &pt.pos.y, &pt.mass);
+			fscanf(f, "%a %a %x", &pt.extContrib.x, &pt.extContrib.y, &pt.pointc);
+			pt.points = (pointMass *)malloc(pt.pointc*sizeof(pointMass));
+			for(int k=0; k<pt.pointc; k++){
+				fscanf(f, "%a %a %a", &pm.pos.x, &pm.pos.y, &pm.mass);
+				pt.points[k] = pm;
+			}
 			pointMatrix[i][j] = pt;
 		}
 	}
@@ -83,9 +94,7 @@ void allocateMemory(){
                 for(int n=0; n<matrixDimX; n++){
                         pointMatrix[m][n].extContrib.x = 0;
                         pointMatrix[m][n].extContrib.y = 0;
-                        pointMatrix[m][n].pos.x = 0;
-                        pointMatrix[m][n].pos.y = 0;
-                        pointMatrix[m][n].mass = 0;
+                        pointMatrix[m][n].pointc = 0;
                 }
         }
 
@@ -93,6 +102,9 @@ void allocateMemory(){
 
 void freeMemory(){
 	for(int i=0; i<matrixDimY; i++){
+		for(int j=0; j<matrixDimX; j++){
+			free(pointMatrix[i][j].points);
+		}
 		free(pointMatrix[i]);
 	}
 	free(pointMatrix);
@@ -106,7 +118,7 @@ void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) 
 	matrixDimY=1000;
 	tolX=10;
 	tolY=10;
-	//calculate cell dimensions
+/*	//calculate cell dimensions
 	vect2 minDist;
 	minDist.x=0;
 	minDist.y=0;
@@ -124,7 +136,7 @@ void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) 
 	int calcResY = (int) ceil(imageSize.y/minDist.y);
 	if(matrixDimX < calcResX) matrixDimX = calcResX;
 	if(matrixDimY < calcResY) matrixDimY = calcResY;
-	
+*/	
 	allocateMemory();
 
 	//populate
@@ -135,11 +147,30 @@ void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) 
         	n=(int) floor((pos.x-imageLlcorner.x)/imageSize.x*matrixDimX);
         	m=(int) floor((pos.y-imageLlcorner.y)/imageSize.y*matrixDimY);
         	if(m<matrixDimY && n<matrixDimX && m>=0 && n>=0){
-                	pointMatrix[m][n].mass = points[i].mass;
-			pointMatrix[m][n].pos.x = points[i].pos.x;
-			pointMatrix[m][n].pos.y = points[i].pos.y;
+			pointMatrix[m][n].pointc++;
 		}
 	}
+	int **tmpCounter;
+	tmpCounter = (int **)malloc(matrixDimY*sizeof(int *));
+	for(int i=0; i<matrixDimY; i++){
+		tmpCounter[i] = (int *)malloc(matrixDimX*sizeof(int));
+		for(int j=0; j<matrixDimX; j++){
+			tmpCounter[i][j] = 0;
+			pointMatrix[i][j].points = (pointMass *)malloc(pointMatrix[i][j].pointc*sizeof(pointMass));
+		}
+	}
+	for(int i=0; i<pointc; i++){
+		pos = points[i].pos;
+        	n=(int) floor((pos.x-imageLlcorner.x)/imageSize.x*matrixDimX);
+        	m=(int) floor((pos.y-imageLlcorner.y)/imageSize.y*matrixDimY);
+        	if(m<matrixDimY && n<matrixDimX && m>=0 && n>=0){
+                	pointMatrix[m][n].points[tmpCounter[m][n]++] = points[i];
+		}
+	}
+	for(int i=0; i<matrixDimY; i++){
+		free(tmpCounter[i]);
+	}
+	free(tmpCounter);
 
 	vect2 cellPos, pointPos, tolerance, pointContrib;
 	tolerance.x = (tolX+0.5)*imageSize.x/matrixDimX;
@@ -149,7 +180,7 @@ void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) 
 		for(int n=0; n<matrixDimX; n++){
 			cellPos.x = imageLlcorner.x+(n+0.5)*imageSize.x/matrixDimX;
 			pointMatrix[m][n].extContrib = backgroundBeta(cellPos);
-			for(int i=0; i<pointc; i++){
+			for(int i=0; i<pointc; i++){ //TODO smarter way?
 				pointPos = points[i].pos;
 				if(fabs(pointPos.x-cellPos.x)<tolerance.x || fabs(pointPos.y-cellPos.y)<tolerance.y)
 					continue;
