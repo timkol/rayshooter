@@ -68,12 +68,26 @@ void deserialize(const char* filename) {
 
 vect2 totalBeta(vect2 imgPos) {//TODO interpolation and near points
 	int n=(int) floor((imgPos.x-imageLlcorner.x)/imageSize.x*matrixDimX);
-	int m=(int) floor((imgPos.y-imageLlcorner.y)/imageSize.y*matrixDimY);
-//	if(m<matrixDimY && n<matrixDimX && m>=0 && n>=0){
-//		fprintf(stderr, "%d %d %f %f\n", m, n, imgPos.x, imgPos.y);
-//		exit;
-//	}
-		return pointMatrix[m][n].extContrib;
+	int m=(int) floor((imgPos.y-imageLlcorner.y)/imageSize.y*matrixDimY); //TODO rand() can return 1.0
+/*	if(m>=matrixDimY || n>=matrixDimX || m<0 || n<0){
+		fprintf(stderr, "%d %d %f %f\n", m, n, imgPos.x, imgPos.y);
+		exit;
+	}
+ */
+	vect2 beta = pointMatrix[m][n].extContrib;
+        vect2 tmpBeta;
+        cell thisCell;
+        for(int j=n-tolX; j<=n+tolX; j++){
+            for(int i=m-tolY; i<=m+tolY; i++){
+                thisCell = pointMatrix[i][j];
+                for(int k=0;k<thisCell.pointc; k++){
+                    tmpBeta = pointBeta(imgPos.x-thisCell.points[k].pos.x, imgPos.y-thisCell.points[k].pos.y);//TODO different point masses
+                    beta.x += tmpBeta.x;
+                    beta.y += tmpBeta.y;
+                }
+            }
+        }
+        return beta;
 /*	}
 	vect2 tmp;
 	tmp.x=0;
@@ -110,33 +124,37 @@ void freeMemory(){
 	free(pointMatrix);
 }
 
-void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) {
-	imageSize = imgSize;
-	imageLlcorner = imgLlcorner;
+void setParams(vect2 imgSize, vect2 imgLlcorner) {
+    /* boundary around original shooting area in cell count "units"
+     * r & u margin should be l & d +1, because rand()/RAND_MAX can return 1 
+     * and they should be at least equal to tolX & tolY */
+    int lmargin = 10;
+    int rmargin = 11;
+    int umargin = 11;
+    int dmargin = 10;
+    
+    int origMatrixDimX=1000; //TODO user defined values
+    int origMatrixDimY=1000;
+    tolX=10;
+    tolY=10;
+    
+    vect2 cellSize;
+    cellSize.x = imgSize.x/origMatrixDimX;
+    cellSize.y = imgSize.y/origMatrixDimY;
+    
+    imageSize.x = imgSize.x + (lmargin+rmargin)*cellSize.x;
+    imageSize.y = imgSize.y + (umargin+dmargin)*cellSize.y;
+    
+    imageLlcorner.x = imgLlcorner.x-lmargin*cellSize.x;
+    imageLlcorner.y = imgLlcorner.y-dmargin*cellSize.y;
+    
+    matrixDimX = origMatrixDimX + lmargin + rmargin;
+    matrixDimY = origMatrixDimY + umargin + dmargin;
+}
 
-	matrixDimX=1000; //TODO user defined values
-	matrixDimY=1000;
-	tolX=10;
-	tolY=10;
-/*	//calculate cell dimensions
-	vect2 minDist;
-	minDist.x=0;
-	minDist.y=0;
-	decimal temp;
-	for(int i=0; i<pointc; i++){
-		for(int j=0; j<pointc; j++){
-			if(i==j) continue;
-			temp = fabs(points[i].pos.x-points[j].pos.x);
-			if(temp < minDist.x) minDist.x = temp;
-			temp = fabs(points[i].pos.y-points[j].pos.y);
-			if(temp < minDist.y) minDist.y = temp;
-		}
-	}
-	int calcResX = (int) ceil(imageSize.x/minDist.x);
-	int calcResY = (int) ceil(imageSize.y/minDist.y);
-	if(matrixDimX < calcResX) matrixDimX = calcResX;
-	if(matrixDimY < calcResY) matrixDimY = calcResY;
-*/	
+void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) {
+	
+        setParams(imgSize, imgLlcorner);
 	allocateMemory();
 
 	//populate
