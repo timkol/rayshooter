@@ -44,7 +44,7 @@ void deserialize(const char* filename) {
 	FILE *f;
 	f = fopen(filename, "r");
 	
-	fscanf(f, "%x %x %x %x %a %a %a %a", &matrixDimX, &matrixDimY, &tolX, &tolY, &borderedImageSize.x, &borderedImageSize.y, &borderedImageLlcorner.x, &borderedImageLlcorner.y);
+	fscanf(f, "%x %x %x %x %la %la %la %la", &matrixDimX, &matrixDimY, &tolX, &tolY, &borderedImageSize.x, &borderedImageSize.y, &borderedImageLlcorner.x, &borderedImageLlcorner.y);
 
 	allocateMemory();
 
@@ -52,10 +52,10 @@ void deserialize(const char* filename) {
 	pointMass pm;
 	for(int i=0; i<matrixDimY; i++){
 		for(int j=0; j<matrixDimX; j++){
-			fscanf(f, "%a %a %x", &pt.extContrib.x, &pt.extContrib.y, &pt.pointc);
+			fscanf(f, "%la %la %x", &pt.extContrib.x, &pt.extContrib.y, &pt.pointc);
 			pt.points = (pointMass *)malloc(pt.pointc*sizeof(pointMass));
 			for(int k=0; k<pt.pointc; k++){
-				fscanf(f, "%a %a %a", &pm.pos.x, &pm.pos.y, &pm.mass);
+				fscanf(f, "%la %la %la", &pm.pos.x, &pm.pos.y, &pm.mass);
 				pt.points[k] = pm;
 			}
 			pointMatrix[i][j] = pt;

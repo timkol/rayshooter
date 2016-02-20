@@ -1,7 +1,7 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
-typedef float decimal; //TODO
+typedef double decimal; //TODO
 
 typedef struct {
 	decimal x,y;
