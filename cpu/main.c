@@ -64,9 +64,6 @@ void bang(vect2* source){
 	img.x = (((decimal) rand())/RAND_MAX*imageSize.x)+imageLlcorner.x;
 	img.y = (((decimal) rand())/RAND_MAX*imageSize.y)+imageLlcorner.y;
 
-/*	decimal x = img.x - backgroundBetaX(img);
-	decimal y = img.y - backgroundBetaY(img);
-*/	
 	vect2 beta = totalBeta(img);
 	source->x = img.x - beta.x;
 	source->y = img.y - beta.y;
