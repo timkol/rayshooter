@@ -74,14 +74,17 @@ vect2 totalBeta(vect2 imgPos) {//TODO interpolation and near points
 		exit;
 	}
 */
-	vect2 beta = pointMatrix[m][n].extContrib;
+        vect2 beta = backgroundBeta(imgPos);
+	beta.x += pointMatrix[m][n].extContrib.x;
+        beta.y += pointMatrix[m][n].extContrib.y;
         vect2 tmpBeta;
-        cell thisCell;
-        for(int j=n-tolX; j<=n+tolX; j++){
-            for(int i=m-tolY; i<=m+tolY; i++){
-                thisCell = pointMatrix[i][j];
-                for(int k=0;k<thisCell.pointc; k++){
-                    tmpBeta = pointBeta(imgPos.x-thisCell.points[k].pos.x, imgPos.y-thisCell.points[k].pos.y);//TODO different point masses
+        cell *thisCell;
+        int i,j,k;
+        for(j=n-tolX; j<=n+tolX; j++){
+            for(i=m-tolY; i<=m+tolY; i++){
+                thisCell = &pointMatrix[i][j];
+                for(k=0;k<thisCell->pointc; k++){
+                    tmpBeta = pointBeta(imgPos.x-thisCell->points[k].pos.x, imgPos.y-thisCell->points[k].pos.y);//TODO different point masses
                     beta.x += tmpBeta.x;
                     beta.y += tmpBeta.y;
                 }
@@ -128,15 +131,15 @@ void setParams(vect2 imgSize, vect2 imgLlcorner) {
     /* boundary around original shooting area in cell count "units"
      * r & u margin should be l & d +1, because rand()/RAND_MAX can return 1 
      * and they (l & d) should be at least equal to tolX & tolY +1 (rounding errors) */
-    int lmargin = 11;
-    int rmargin = 12;
-    int umargin = 12;
-    int dmargin = 11;
+    int lmargin = 3;
+    int rmargin = 4;
+    int umargin = 4;
+    int dmargin = 3;
     
     int origMatrixDimX=1000; //TODO user defined values
     int origMatrixDimY=1000;
-    tolX=10;
-    tolY=10;
+    tolX=2;
+    tolY=2;
     
     vect2 cellSize;
     cellSize.x = imgSize.x/origMatrixDimX;
@@ -197,7 +200,8 @@ void createNew(pointMass* points, int pointc, vect2 imgSize, vect2 imgLlcorner) 
 		cellPos.y = borderedImageLlcorner.y+(m+0.5)*borderedImageSize.y/matrixDimY;
 		for(int n=0; n<matrixDimX; n++){
 			cellPos.x = borderedImageLlcorner.x+(n+0.5)*borderedImageSize.x/matrixDimX;
-			pointMatrix[m][n].extContrib = backgroundBeta(cellPos);
+			pointMatrix[m][n].extContrib.x = 0;
+                        pointMatrix[m][n].extContrib.y = 0;
 			for(int i=0; i<pointc; i++){ //TODO smarter way?
 				pointPos = points[i].pos;
 				if(fabs(pointPos.x-cellPos.x)<tolerance.x || fabs(pointPos.y-cellPos.y)<tolerance.y)
